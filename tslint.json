@@ -1,0 +1,23 @@
+/**
+ * TSLint configuration
+ * https://palantir.github.io/tslint/usage/configuration/
+ */
+{
+  "extends": [
+    "tslint:recommended"
+  ],
+  "rules": {
+    "quotemark": [true, "single"],
+    "semicolon": [true, "always"],
+    "one-variable-per-declaration": false,
+    "variable-name": [true, "allow-leading-underscore"],
+    "space-before-function-paren": [true, {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
+    "no-empty": false,
+    "curly": [true, "ignore-same-line"],
+    "one-line": [true, "check-open-brace", "check-whitespace"],
+    "ordered-imports": false,
+    "object-literal-sort-keys": false,
+    "trailing-comma": false,
+    "arrow-parens": false
+  }
+}

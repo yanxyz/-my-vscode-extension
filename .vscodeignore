@@ -1,0 +1,14 @@
+.vscode/**
+.vscode-test/**
+out/test/**
+out/**/*.map
+src/**
+.gitignore
+tsconfig.json
+vsc-extension-quickstart.md
+
+.editorconfig
+install.ps1
+tslint.json
+yarn.lock
+package-lock.json

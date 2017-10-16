@@ -1,0 +1,8 @@
+out/
+.vscode-test/
+*.vsix
+vsc-extension-quickstart.md
+
+node_modules
+package-lock.json
+yarn.lock

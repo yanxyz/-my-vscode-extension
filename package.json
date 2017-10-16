@@ -1,0 +1,155 @@
+{
+  "name": "my-vscode-extension",
+  "displayName": "My VSCode Extension",
+  "description": "",
+  "version": "1.0.0",
+  "publisher": "yanxyz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanxyz/my-vscode-extension.git"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.17.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.openTotalcmd",
+    "onCommand:extension.openSubl",
+    "onCommand:extension.openConEmu",
+    "onCommand:extension.openIntegratedTerminal",
+    "onCommand:extension.createFile",
+    "onCommand:extension.copyFile",
+    "onCommand:extension.moveFile",
+    "onCommand:extension.copyRelativePath"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.openTotalcmd",
+        "title": "Reveal in Total Commander"
+      },
+      {
+        "command": "extension.openSubl",
+        "title": "Open in Sublime Text"
+      },
+      {
+        "command": "extension.openConEmu",
+        "title": "Open in ConEmu"
+      },
+      {
+        "command": "extension.openIntegratedTerminal",
+        "title": "Open in Integrated Terminal"
+      },
+      {
+        "command": "extension.createFile",
+        "category": "file",
+        "title": "Create File"
+      },
+      {
+        "command": "extension.copyFile",
+        "category": "file",
+        "title": "Duplicate file"
+      },
+      {
+        "command": "extension.moveFile",
+        "category": "file",
+        "title": "Move file"
+      },
+      {
+        "command": "extension.copyRelativePath",
+        "title": "Copy Relative Path"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "My Extension",
+      "properties": {
+        "my.totalcmd": {
+          "type": "string",
+          "default": "TOTALCMD.EXE",
+          "description": "Specify the path of totalcmd.exe"
+        },
+        "my.totalcmdArgs": {
+          "type": "array",
+          "default": [
+            "/O",
+            "/T",
+            "/S",
+            "/L={path}"
+          ],
+          "description": "Specify totalcmd.exe command line args\n\"{path}\" means current file path"
+        },
+        "my.subl": {
+          "type": "string",
+          "default": "subl.exe",
+          "description": "Specify subl.exe path"
+        },
+        "my.conemu": {
+          "type": "string",
+          "default": "conemu.exe",
+          "description": "Specify conemu.exe path"
+        },
+        "my.conemuArgs": {
+          "type": "array",
+          "default": [
+            "-Single",
+            "-run",
+            "{Git bash}"
+          ],
+          "description": "Specify conemu.exe command line args."
+        }
+      }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "extension.openTotalcmd"
+        },
+        {
+          "command": "extension.copyRelativePath"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "extension.openTotalcmd",
+          "group": "3_extension"
+        },
+        {
+          "command": "extension.openSubl",
+          "group": "3_extension"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "extension.openIntegratedTerminal"
+        },
+        {
+          "command": "extension.copyRelativePath"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^7.0.43",
+    "typescript": "^2.5.3",
+    "vscode": "^1.1.6"
+  },
+  "dependencies": {
+    "copy-paste": "^1.3.0",
+    "make-dir": "^1.0.0",
+    "pify": "^3.0.0"
+  }
+}
