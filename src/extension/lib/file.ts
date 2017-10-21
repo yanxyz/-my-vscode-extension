@@ -3,112 +3,124 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as makeDir from 'make-dir';
 import * as pify from 'pify';
-import { getFilePath } from './utils';
+import Cache from './cache';
+
+const cache = new Cache();
 
 export async function createFile() {
-  const entry = await getPath();
-  if (!entry) return;
+  const paths = await getPaths();
+  if (!paths) return;
+  const target = paths.target;
 
   try {
-    // 路径末尾 '/' 表示目录
-    if (entry.targetFilePath.endsWith('/')) {
-      await makeDir(entry);
-      return;
-    }
-
-    await makeDir(path.dirname(entry.targetFilePath));
-    await pify(fs.appendFile)(entry.targetFilePath, Buffer.from(''));
-    const textDocument = await vscode.workspace.openTextDocument(entry.targetFilePath);
-    vscode.window.showTextDocument(textDocument);
+    await makeDir(path.dirname(target));
+    await pify(fs.appendFile)(target, Buffer.from(''));
+    await open(target);
     return;
   } catch (err) {
-    showError(err.message);
-    return;
+    return showError(err.message);
   }
 }
 
 export async function copyFile() {
-  const entry = await getPath();
-  if (!entry) return;
-  const { currentFilePath, targetFilePath } = entry;
-
-  if (entry.targetFilePath.endsWith('/')) {
-    showError('File name should not end with "/".');
-    return;
-  }
+  const paths = await getPaths('copy');
+  if (!paths) return;
+  const target = paths.target;
 
   try {
-    await makeDir(path.dirname(targetFilePath));
-    await copy(currentFilePath, targetFilePath);
-    await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(targetFilePath));
+    await makeDir(path.dirname(target));
+    await copy(paths.current, target);
+    await open(target);
     return;
   } catch (err) {
-    showError(err.message);
-    return;
+    return showError(err.message);
   }
 }
 
 export async function moveFile() {
-  const entry = await getPath();
-  if (!entry) return;
-  const { currentFilePath, targetFilePath } = entry;
-
-  if (targetFilePath.endsWith('/')) {
-    showError('File name should not end with "/".');
-    return;
-  }
+  const paths = await getPaths();
+  if (!paths) return;
+  const target = paths.target;
 
   try {
-    await makeDir(path.dirname(targetFilePath));
-    await pify(fs.rename)(currentFilePath, targetFilePath);
-    await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(targetFilePath));
+    await makeDir(path.dirname(target));
+    await pify(fs.rename)(paths.current, target);
+    await open(target);
     return;
   } catch (err) {
-    showError(err.message);
-    return;
+    return showError(err.message);
   }
 }
 
-export interface IEntry {
-  currentFilePath: string;
-  targetFilePath: string;
-}
+async function getPaths(action?: string) {
+  /**
+   * Get the active document
+   */
 
-async function getPath(): Promise<IEntry> {
-  const input = await vscode.window.showInputBox({
+  const editor = vscode.window.activeTextEditor;
+  // TODO: 当前 Tab 不是 editor，比如图片预览，怎么办?
+  if (!editor) {
+    return showError('Please open a file first.');
+  }
+  const document = editor.document;
+  if (document.isUntitled || document.isDirty) {
+    return showError('Please save file first.');
+  }
+  const current = document.fileName;
+  let target: string;
+
+  /**
+   * handle input
+   */
+
+  const value: string = cache.get() || (action === 'copy' && path.basename(current))
+  let input = await vscode.window.showInputBox({
     prompt: 'File Name',
-    placeHolder: 'Filename or relative path to file'
+    value
   });
 
-  if (!input) return;
+  if (!input) return; // 用户取消输入时为 undefined
+  input = input.trim();
+  if (!input) return; // 用户输入为空白
 
-  const currentFilePath = getFilePath();
-  if (!currentFilePath) return;
+  // 缓存 input，若这次操作出错方便下次修改
+  cache.set(input);
 
-  let targetFilePath: string;
-  // 路径以 '/' 开始表示相对于 workspace root
+  input = input.replace(/\\/g, '/');
+
+  // 以 `/` 开始表示相对于当前文件所在的 workspace folder
   if (input.startsWith('/')) {
-    const root = vscode.workspace.rootPath;
-    if (!root) {
-      showError('Please open a folder first');
-      return;
+    if (!vscode.workspace.workspaceFolders) {
+      return showError(`Please open a folder first.`);
     }
-    targetFilePath = path.join(root, input.slice(1));
+
+    const workspaceRoot = vscode.workspace.getWorkspaceFolder(document.uri);
+    if (!workspaceRoot) {
+      return showError('Please open a file first.');
+    }
+
+    target = path.join(workspaceRoot.uri.fsPath, input);
   }
-  // 其它情况表示相对于当前文件
+  // windows 包含 driver 的绝对路径
+  else if (/^[a-z]:/i.test(input)) {
+    target = input;
+  }
+  // 其它情况表示相对于当前文件所在目录
   else {
-    targetFilePath = path.resolve(path.dirname(currentFilePath), input);
+    target = path.join(current, '..', input);
   }
 
   try {
-    await pify(fs.access)(targetFilePath);
-    showError('Target exsits!');
-    return;
+    await pify(fs.access)(target);
+    return showError('Target exsits!');
   } catch (error) {
     // not exsits
   }
 
-  return { currentFilePath, targetFilePath };
+  return {
+    current,
+    target
+  };
 }
 
 function showError(message: string) {
@@ -122,4 +134,9 @@ function copy(src: string, dest: string) {
       .on('close', resolve)
       .on('error', reject);
   });
+}
+
+function open(fileName: string) {
+  return vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fileName))
+    .then(() => cache.clear());
 }

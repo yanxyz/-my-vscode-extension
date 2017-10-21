@@ -2,34 +2,33 @@ import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 
 /**
- * Get the path of current file
+ * 获取合适的 uri
+ *
+ * command 在不同的位置调用，回调参数不同
+ * context menu 传入 uri; command palette 为空，此时用当前文档的 uri
  */
-export function getFilePath(fileUri?: vscode.Uri) {
-  let scheme: string, fsPath: string;
-  if (fileUri) { // context
-    scheme = fileUri.scheme;
-    fsPath = fileUri.fsPath;
-  } else { // command palette, fileUri is undefined
+export function getUri(uri?: vscode.Uri): vscode.Uri {
+  if (!uri) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-      scheme = editor.document.uri.scheme;
-      fsPath = editor.document.fileName;
+      uri = editor.document.uri;
     } else {
       vscode.window.showErrorMessage('Please open a file first.');
       return;
     }
   }
 
+  const scheme = uri.scheme;
   if (scheme === 'untitled') {
-    vscode.window.showErrorMessage('Please save file first.');
+    vscode.window.showErrorMessage('Please save this untitled file first.');
     return;
   }
   if (scheme !== 'file') {
-    vscode.window.showErrorMessage('Current edit is not a file.');
+    vscode.window.showErrorMessage('Target is not a file.');
     return;
   }
 
-  return fsPath;
+  return uri;
 }
 
 /**

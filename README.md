@@ -6,8 +6,8 @@
 - Open in Sublime Text
 - Open in ConEmu
 - Open in Integrated Terminal
-- Copy Relative Path
-- File: Create File，创建新文件，会创建目录
+- Copy Relative Path, 相对于 workspace folder
+- File: Create File，会创建不存在的目录
 - File: Duplicate file
 - File: Move file
 

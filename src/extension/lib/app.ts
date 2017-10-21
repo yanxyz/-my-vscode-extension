@@ -1,19 +1,19 @@
 import * as vscode from 'vscode';
 import { dirname } from 'path';
-import { getFilePath, open } from './utils';
+import { getUri, open } from './utils';
 
 /**
  * Reveal current file/dir in Total Commander
  */
 
-export function openTotalcmd(fileUri?: vscode.Uri) {
-  const fsPath = getFilePath(fileUri);
-  if (!fsPath) return;
+export function openTotalcmd(uri?: vscode.Uri) {
+  uri = getUri(uri);
+  if (!uri) return;
 
   const config = vscode.workspace.getConfiguration('my');
   const app = config.get<string>('totalcmd');
   const args = config.get<string[]>('totalcmdArgs');
-  const argv = args.map(x => x.replace('{path}', fsPath));
+  const argv = args.map(x => x.replace('{path}', uri.fsPath));
   open(app, argv);
 }
 
@@ -21,14 +21,14 @@ export function openTotalcmd(fileUri?: vscode.Uri) {
  * Open ConEmu at current file's directory
  */
 
-export function openConEmu(fileUri?: vscode.Uri) {
-  const fsPath = getFilePath(fileUri);
-  if (!fsPath) return;
+export function openConEmu(uri?: vscode.Uri) {
+  uri = getUri(uri);
+  if (!uri) return;
 
   const config = vscode.workspace.getConfiguration('my');
   const app = config.get<string>('conemu');
   const args = config.get<string[]>('conemuArgs');
-  const dir = dirname(fsPath);
+  const dir = dirname(uri.fsPath);
   open(app, args, { cwd: dir });
 }
 
@@ -36,15 +36,15 @@ export function openConEmu(fileUri?: vscode.Uri) {
  * Open current file in Sublime Text
  */
 
-export function openSubl(fileUri?: vscode.Uri) {
-  const fileName = getFilePath(fileUri);
-  if (!fileName) return;
+export function openSubl(uri?: vscode.Uri) {
+  uri = getUri(uri);
+  if (!uri) return;
 
   const editor = vscode.window.activeTextEditor;
-  const rootPath = vscode.workspace.rootPath;
+  const rootPath = vscode.workspace.getWorkspaceFolder(uri).uri.fsPath || '';
   let { line: ln, character: col } = editor.selection.active;
   const app = vscode.workspace.getConfiguration('my').get<string>('subl');
-  open(app, ['-n', '-w', '-a', `${rootPath}`, `${fileName}:${++ln}:${++col}`]);
+  open(app, ['-n', '-w', '-a', rootPath, `${uri.fsPath}:${++ln}:${++col}`]);
 }
 
 /**
@@ -52,11 +52,11 @@ export function openSubl(fileUri?: vscode.Uri) {
  * https://github.com/formulahendry/vscode-terminal/blob/master/src/extension.ts#L90
  */
 
-export function openIntegratedTerminal(fileUri?: vscode.Uri) {
-  const fsPath = getFilePath(fileUri);
-  if (!fsPath) return;
+export function openIntegratedTerminal(uri?: vscode.Uri) {
+  uri = getUri(uri);
+  if (!uri) return;
 
   const terminal = vscode.window.createTerminal();
   terminal.show(false);
-  terminal.sendText(`cd "${dirname(fsPath)}"`);
+  terminal.sendText(`cd "${dirname(uri.fsPath)}"`);
 }
